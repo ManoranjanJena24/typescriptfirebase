@@ -1,15 +1,177 @@
-// import { User } from 'firebase/auth';
-// import {createContext} from 'react';
+// import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, User } from 'firebase/auth';
+// import { createContext, useContext, useEffect, useState } from 'react';
+// import { auth } from '../firebaseConfig';
 
 
-// type AuthContextData={
-//     user:User|null;
-//     logIn: typeof login;
-//     signUp:typeof signup;
-//     logout: typeof LogOut;
+// interface IUserAuthProviderProps {
+//     children: React.ReactNode
+// }
+
+// type AuthContextData = {
+//     user: User | null;
+//     logIn: typeof logIn;
+//     signUp: typeof signUp;
+//     logOut: typeof logOut;
+//     googleSignIn: typeof googleSignIn;
 
 // }
 
-// export const userAuthContext=createContext<AuthContextData>({
-    
-// })
+
+
+// const logIn = (email: string, password: string) => {
+//     return signInWithEmailAndPassword(auth, email, password)
+
+// }
+
+// const signUp = (email: string, password: string) => {
+//     return createUserWithEmailAndPassword(auth, email, password)
+// }
+
+// const logOut = () => {
+//     signOut(auth);
+// }
+
+
+// const googleSignIn = () => {
+//     const googleAuthProvider = new GoogleAuthProvider();
+//     return signInWithPopup(auth, googleAuthProvider)
+
+// }
+
+// export const userAuthContext = createContext<AuthContextData>({
+//     user: null,
+//     logIn,
+//     signUp,
+//     logOut,
+//     googleSignIn,
+
+
+// });
+
+
+// export const UserAuthProvider: React.FunctionComponent<IUserAuthProviderProps> = ({ children }) => {
+//     const [user, setUser] = useState<User | null>(null)
+
+//     useEffect(()=>{
+//         const unsubscribe=onAuthStateChanged(auth,(user)=>{
+//             if(user){
+//                 console.log("The logged in User state is ",user)
+//                 setUser(user)
+//             }
+
+//             return()=>{
+//                 unsubscribe()
+//             }
+//         })
+//     })
+
+
+
+//     const value :AuthContextData = {
+//         user,
+//         logIn,
+//         signUp,
+//         logOut,
+//         googleSignIn,
+
+
+//     }
+//     return (
+//         <userAuthContext.Provider value={ value}>{children}</userAuthContext.Provider>
+//     )
+// }
+
+
+
+// export const useUserAuth=()=>{
+//     return useContext(userAuthContext)
+// }
+
+
+
+
+
+
+
+
+
+import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, User } from 'firebase/auth';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { auth } from '../firebaseConfig';
+
+interface IUserAuthProviderProps {
+    children: React.ReactNode;
+}
+
+type AuthContextData = {
+    user: User | null;
+    logIn: typeof logIn;
+    signUp: typeof signUp;
+    logOut: typeof logOut;
+    googleSignIn: typeof googleSignIn;
+};
+
+// Authentication functions
+const logIn = (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
+};
+
+const signUp = (email: string, password: string) => {
+    return createUserWithEmailAndPassword(auth, email, password);
+};
+
+const logOut = () => {
+    signOut(auth);
+};
+
+const googleSignIn = () => {
+    const googleAuthProvider = new GoogleAuthProvider();
+    return signInWithPopup(auth, googleAuthProvider);
+};
+
+// Create context
+export const userAuthContext = createContext<AuthContextData>({
+    user: null,
+    logIn,
+    signUp,
+    logOut,
+    googleSignIn,
+});
+
+export const UserAuthProvider: React.FunctionComponent<IUserAuthProviderProps> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("The logged in User state is ", user);
+                setUser(user);
+            } else {
+                setUser(null);  // Clear user if not logged in
+            }
+        });
+
+        // Cleanup: unsubscribe from the auth listener when the component unmounts
+        return () => {
+            unsubscribe();
+        };
+    }, []); // Empty dependency array ensures this runs only once when the component mounts
+
+    const value: AuthContextData = {
+        user,
+        logIn,
+        signUp,
+        logOut,
+        googleSignIn,
+    };
+
+    return (
+        <userAuthContext.Provider value={value}>
+            {children}
+        </userAuthContext.Provider>
+    );
+};
+
+export const useUserAuth = () => {
+    return useContext(userAuthContext);
+};
